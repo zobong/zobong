@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>강화 이득 계산기 (조/억 선택 가능)</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+      color: #333;
+    }
+    h2 { text-align: center; }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label, input, select {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    input[type="number"], select {
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #3c78d8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      background: #e0f7fa;
+      border-left: 4px solid #0097a7;
+    }
+    table {
+      width: 100%;
+      margin-top: 15px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>강화 이득 계산기 (조/억 선택)</h2>
+
+    <label>단위 선택</label>
+    <select id="unit">
+      <option value="10000">조</option>
+      <option value="1" selected>억</option>
+    </select>
+
+    <label>1카 구입가</label>
+    <input type="number" id="buyPrice" placeholder="예: 730" />
+
+    <label>강화 1회당 비용</label>
+    <input type="number" id="enhanceCost" placeholder="예: 10" />
+
+    <label>판매가</label>
+    <input type="number" id="sellPrice" placeholder="예: 6000000" />
+
+    <label>적용 조건</label>
+    <select id="condition">
+      <option value="0.80">피방 탑클만 (×0.80)</option>
+      <option value="0.92">피방 탑클 + 30% 혜택 (×0.92)</option>
+      <option value="0.96">피방 탑클 + 40% 혜택 (×0.96)</option>
+    </select>
+
+    <button onclick="calculate()">계산하기</button>
+
+    <div id="result" class="result"></div>
+    <div id="tableResult"></div>
+  </div>
+
+  <script>
+    function calculate() {
+      const unitMultiplier = parseFloat(document.getElementById("unit").value); // 10000 (조) or 1 (억)
+      const buyInput = parseFloat(document.getElementById("buyPrice").value);
+      const enhanceInput = parseFloat(document.getElementById("enhanceCost").value);
+      const sellInput = parseFloat(document.getElementById("sellPrice").value);
+      const multiplier = parseFloat(document.getElementById("condition").value);
+
+      const resultDiv = document.getElementById("result");
+      const tableDiv = document.getElementById("tableResult");
+
+      if (isNaN(buyInput) || isNaN(enhanceInput) || isNaN(sellInput)) {
+        resultDiv.innerText = "모든 항목을 숫자로 입력하세요.";
+        tableDiv.innerHTML = "";
+        return;
+      }
+
+      // 입력을 억 단위로 환산
+      const buy = buyInput * unitMultiplier;
+      const enhance = enhanceInput * unitMultiplier;
+      const sell = sellInput * unitMultiplier;
+
+      const net = sell * multiplier;
+
+      let tableHTML = `
+        <table>
+          <tr>
+            <th>강화 횟수</th>
+            <th>총 투자비 (${unitMultiplier === 10000 ? '조' : '억'})</th>
+            <th>실수령액 (${unitMultiplier === 10000 ? '조' : '억'})</th>
+            <th>수익 (${unitMultiplier === 10000 ? '조' : '억'})</th>
+            <th>결과</th>
+          </tr>
+      `;
+
+      let i = 0;
+      while (true) {
+        const totalCost = buy + enhance * i;
+        const profit = net - totalCost;
+        const resultText = profit >= 0 ? "이득" : "손해";
+
+        tableHTML += `
+          <tr>
+            <td>${i}번</td>
+            <td>${(totalCost / unitMultiplier).toFixed(2)}</td>
+            <td>${(net / unitMultiplier).toFixed(2)}</td>
+            <td style="color:${profit >= 0 ? 'green' : 'red'}">${(profit / unitMultiplier).toFixed(2)}</td>
+            <td>${resultText}</td>
+          </tr>
+        `;
+
+        if (profit < 0 || i > 10000) break;
+        i++;
+      }
+
+      const max = i - 1;
+      const finalInvest = buy + enhance * max;
+
+      tableHTML += `</table>`;
+
+      resultDiv.innerHTML = `
+        ✔️ ${max}번까지 강화하면 이득입니다.<br/>
+        💸 총 투자비: ${(finalInvest / unitMultiplier).toFixed(2)} ${unitMultiplier === 10000 ? '조' : '억'}<br/>
+        📥 실수령액 (적용 조건: ×${multiplier}): ${(net / unitMultiplier).toFixed(2)} ${unitMultiplier === 10000 ? '조' : '억'}
+      `;
+
+      tableDiv.innerHTML = tableHTML;
+    }
+  </script>
+</body>
+</html>
