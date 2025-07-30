@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>강화 이득 계산기</title>
+  <title>강화 이득 계산기 (조/억 선택 가능)</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -62,16 +62,22 @@
 </head>
 <body>
   <div class="container">
-    <h2>강화 이득 계산기</h2>
+    <h2>강화 이득 계산기 (조/억 선택)</h2>
 
-    <label>1카 구입가 (억)</label>
-    <input type="number" id="buyPrice" placeholder="예: 2000" />
+    <label>단위 선택</label>
+    <select id="unit">
+      <option value="10000">조</option>
+      <option value="1" selected>억</option>
+    </select>
 
-    <label>강화 1회당 비용 (억)</label>
-    <input type="number" id="enhanceCost" placeholder="예: 300" />
+    <label>1카 구입가</label>
+    <input type="number" id="buyPrice" placeholder="예: 730" />
 
-    <label>판매가 (억)</label>
-    <input type="number" id="sellPrice" placeholder="예: 6000" />
+    <label>강화 1회당 비용</label>
+    <input type="number" id="enhanceCost" placeholder="예: 10" />
+
+    <label>판매가</label>
+    <input type="number" id="sellPrice" placeholder="예: 6000000" />
 
     <label>적용 조건</label>
     <select id="condition">
@@ -88,19 +94,25 @@
 
   <script>
     function calculate() {
-      const buy = parseFloat(document.getElementById("buyPrice").value);
-      const enhance = parseFloat(document.getElementById("enhanceCost").value);
-      const sell = parseFloat(document.getElementById("sellPrice").value);
+      const unitMultiplier = parseFloat(document.getElementById("unit").value); // 10000 (조) or 1 (억)
+      const buyInput = parseFloat(document.getElementById("buyPrice").value);
+      const enhanceInput = parseFloat(document.getElementById("enhanceCost").value);
+      const sellInput = parseFloat(document.getElementById("sellPrice").value);
       const multiplier = parseFloat(document.getElementById("condition").value);
 
       const resultDiv = document.getElementById("result");
       const tableDiv = document.getElementById("tableResult");
 
-      if (isNaN(buy) || isNaN(enhance) || isNaN(sell)) {
+      if (isNaN(buyInput) || isNaN(enhanceInput) || isNaN(sellInput)) {
         resultDiv.innerText = "모든 항목을 숫자로 입력하세요.";
         tableDiv.innerHTML = "";
         return;
       }
+
+      // 입력을 억 단위로 환산
+      const buy = buyInput * unitMultiplier;
+      const enhance = enhanceInput * unitMultiplier;
+      const sell = sellInput * unitMultiplier;
 
       const net = sell * multiplier;
 
@@ -108,9 +120,9 @@
         <table>
           <tr>
             <th>강화 횟수</th>
-            <th>총 투자비 (억)</th>
-            <th>실수령액 (억)</th>
-            <th>수익 (억)</th>
+            <th>총 투자비 (${unitMultiplier === 10000 ? '조' : '억'})</th>
+            <th>실수령액 (${unitMultiplier === 10000 ? '조' : '억'})</th>
+            <th>수익 (${unitMultiplier === 10000 ? '조' : '억'})</th>
             <th>결과</th>
           </tr>
       `;
@@ -124,9 +136,9 @@
         tableHTML += `
           <tr>
             <td>${i}번</td>
-            <td>${totalCost.toFixed(2)}</td>
-            <td>${net.toFixed(2)}</td>
-            <td style="color:${profit >= 0 ? 'green' : 'red'}">${profit.toFixed(2)}</td>
+            <td>${(totalCost / unitMultiplier).toFixed(2)}</td>
+            <td>${(net / unitMultiplier).toFixed(2)}</td>
+            <td style="color:${profit >= 0 ? 'green' : 'red'}">${(profit / unitMultiplier).toFixed(2)}</td>
             <td>${resultText}</td>
           </tr>
         `;
@@ -142,8 +154,8 @@
 
       resultDiv.innerHTML = `
         ✔️ ${max}번까지 강화하면 이득입니다.<br/>
-        💸 총 투자비: ${finalInvest.toFixed(2)}억<br/>
-        📥 실수령액 (적용 조건: ×${multiplier}): ${net.toFixed(2)}억
+        💸 총 투자비: ${(finalInvest / unitMultiplier).toFixed(2)} ${unitMultiplier === 10000 ? '조' : '억'}<br/>
+        📥 실수령액 (적용 조건: ×${multiplier}): ${(net / unitMultiplier).toFixed(2)} ${unitMultiplier === 10000 ? '조' : '억'}
       `;
 
       tableDiv.innerHTML = tableHTML;
